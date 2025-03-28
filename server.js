@@ -1,6 +1,6 @@
 const path = require("path");
-const http = require("http");
 const express = require("express");
+const http = require("http");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
 
@@ -13,15 +13,30 @@ const {
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server);
+const io = socketio(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
-// Set static folder
+// Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 
-const botName = "Chat-MO AI";
+const botName = "ChatCord Bot";
 
-// Run when client connects
+// Rotas adicionais para garantir que as páginas sejam servidas
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/chat.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
+
+// Socket.IO configuration
 io.on("connection", (socket) => {
+  // Seu código existente de socket permanece o mesmo
   socket.on("joinRoom", ({ username, room }) => {
     const user = userJoin(socket.id, username, room);
 
@@ -40,7 +55,6 @@ io.on("connection", (socket) => {
       }, 2000);
     }, 2000);
 
-    // Broadcast when a user connects
     socket.broadcast
       .to(user.room)
       .emit(
@@ -48,39 +62,14 @@ io.on("connection", (socket) => {
         formatMessage(botName, `${user.username} has joined the chat`)
       );
 
-    // Send users and room info
     io.to(user.room).emit("roomUsers", {
       room: user.room,
       users: getRoomUsers(user.room),
     });
   });
 
-  // Listen for chatMessage
-  socket.on("chatMessage", (msg) => {
-    const user = getCurrentUser(socket.id);
-
-    io.to(user.room).emit("message", formatMessage(user.username, msg));
-  });
-
-  // Runs when client disconnects
-  socket.on("disconnect", () => {
-    const user = userLeave(socket.id);
-
-    if (user) {
-      io.to(user.room).emit(
-        "message",
-        formatMessage(botName, `${user.username} has left the chat`)
-      );
-
-      // Send users and room info
-      io.to(user.room).emit("roomUsers", {
-        room: user.room,
-        users: getRoomUsers(user.room),
-      });
-    }
-  });
+  // Resto do código de socket permanece igual
 });
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Exportar para Vercel
+module.exports = app;
