@@ -3,10 +3,7 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const formatMessage = require("./utils/messages");
-const createAdapter = require("@socket.io/redis-adapter").createAdapter;
-const redis = require("redis");
-require("dotenv").config();
-const { createClient } = redis;
+
 const {
   userJoin,
   getCurrentUser,
@@ -23,16 +20,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const botName = "ChatCord Bot";
 
-(async () => {
-  pubClient = createClient({ url: "redis://127.0.0.1:6379" });
-  await pubClient.connect();
-  subClient = pubClient.duplicate();
-  io.adapter(createAdapter(pubClient, subClient));
-})();
-
 // Run when client connects
 io.on("connection", (socket) => {
-  console.log(io.of("/").adapter);
   socket.on("joinRoom", ({ username, room }) => {
     const user = userJoin(socket.id, username, room);
 
