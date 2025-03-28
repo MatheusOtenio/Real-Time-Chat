@@ -27,15 +27,18 @@ io.on("connection", (socket) => {
 
     socket.join(user.room);
 
-    // Welcome current user
-    socket.emit("message", formatMessage(botName, "Welcome to Chat MO!"));
-    socket.emit(
-      "message",
-      formatMessage(
-        botName,
-        "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
-      )
-    );
+    setTimeout(() => {
+      socket.emit("message", formatMessage(botName, "Welcome!")); // Primeira mensagem após 2 segundos
+      setTimeout(() => {
+        socket.emit(
+          "message",
+          formatMessage(
+            botName,
+            "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
+          )
+        ); // Segunda mensagem após mais 2 segundos
+      }, 2000);
+    }, 2000);
 
     // Broadcast when a user connects
     socket.broadcast
