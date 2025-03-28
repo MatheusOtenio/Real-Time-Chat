@@ -8,7 +8,10 @@ const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
-const socket = io();
+// Modify Socket.IO connection to use full URL
+const socket = io(window.location.origin, {
+  transports: ["websocket", "polling"],
+});
 
 // Join chatroom
 socket.emit("joinRoom", { username, room });

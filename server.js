@@ -1,7 +1,7 @@
 const path = require("path");
 const express = require("express");
 const http = require("http");
-const socketio = require("socket.io");
+const { Server } = require("socket.io");
 const formatMessage = require("./utils/messages");
 
 const {
@@ -13,7 +13,9 @@ const {
 
 const app = express();
 const server = http.createServer(app);
-const io = socketio(server, {
+
+// Configure CORS for Socket.IO
+const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -25,7 +27,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const botName = "ChatCord Bot";
 
-// Ensure pages are served
+// Routes
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -41,18 +43,14 @@ io.on("connection", (socket) => {
 
     socket.join(user.room);
 
-    setTimeout(() => {
-      socket.emit("message", formatMessage(botName, "Welcome!"));
-      setTimeout(() => {
-        socket.emit(
-          "message",
-          formatMessage(
-            botName,
-            "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
-          )
-        );
-      }, 2000);
-    }, 2000);
+    socket.emit("message", formatMessage(botName, "Welcome!"));
+    socket.emit(
+      "message",
+      formatMessage(
+        botName,
+        "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
+      )
+    );
 
     socket.broadcast
       .to(user.room)
@@ -67,7 +65,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Add missing socket event handlers
   socket.on("chatMessage", (msg) => {
     const user = getCurrentUser(socket.id);
 
@@ -93,5 +90,5 @@ io.on("connection", (socket) => {
   });
 });
 
-// Export for Vercel
+// For Vercel
 module.exports = app;
