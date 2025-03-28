@@ -20,12 +20,12 @@ const io = socketio(server, {
   },
 });
 
-// Middleware para servir arquivos estáticos
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 const botName = "ChatCord Bot";
 
-// Rotas adicionais para garantir que as páginas sejam servidas
+// Ensure pages are served
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -42,7 +42,7 @@ io.on("connection", (socket) => {
     socket.join(user.room);
 
     setTimeout(() => {
-      socket.emit("message", formatMessage(botName, "Welcome!")); // Primeira mensagem após 2 segundos
+      socket.emit("message", formatMessage(botName, "Welcome!"));
       setTimeout(() => {
         socket.emit(
           "message",
@@ -50,7 +50,7 @@ io.on("connection", (socket) => {
             botName,
             "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
           )
-        ); // Segunda mensagem após mais 2 segundos
+        );
       }, 2000);
     }, 2000);
 
@@ -66,7 +66,32 @@ io.on("connection", (socket) => {
       users: getRoomUsers(user.room),
     });
   });
+
+  // Add missing socket event handlers
+  socket.on("chatMessage", (msg) => {
+    const user = getCurrentUser(socket.id);
+
+    if (user) {
+      io.to(user.room).emit("message", formatMessage(user.username, msg));
+    }
+  });
+
+  socket.on("disconnect", () => {
+    const user = userLeave(socket.id);
+
+    if (user) {
+      io.to(user.room).emit(
+        "message",
+        formatMessage(botName, `${user.username} has left the chat`)
+      );
+
+      io.to(user.room).emit("roomUsers", {
+        room: user.room,
+        users: getRoomUsers(user.room),
+      });
+    }
+  });
 });
 
-// Exportar para Vercel
-module.exports = server;
+// Export for Vercel
+module.exports = app;
