@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "Realtime chat app with rooms",
   "main": "server.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "start": "node server",
     "dev": "nodemon server"
   },
   "author": "mathuesotenio",
-  "license": "MO",
+  "license": "MIT",
   "dependencies": {
     "dotenv": "^14.3.2",
     "express": "^4.21.2",

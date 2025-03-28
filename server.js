@@ -36,7 +36,6 @@ app.get("/chat.html", (req, res) => {
 
 // Socket.IO configuration
 io.on("connection", (socket) => {
-  // Seu código existente de socket permanece o mesmo
   socket.on("joinRoom", ({ username, room }) => {
     const user = userJoin(socket.id, username, room);
 
@@ -67,9 +66,7 @@ io.on("connection", (socket) => {
       users: getRoomUsers(user.room),
     });
   });
-
-  // Resto do código de socket permanece igual
 });
 
 // Exportar para Vercel
-module.exports = app;
+module.exports = server;
