@@ -8,23 +8,28 @@ const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
-// Modify Socket.IO connection to use full URL
+console.log(`Attempting to join with username: ${username}, room: ${room}`); // Logging
+
 const socket = io(window.location.origin, {
   transports: ["websocket", "polling"],
 });
 
 // Join chatroom
-socket.emit("joinRoom", { username, room });
+socket.on("connect", () => {
+  console.log("Socket connected"); // Confirm connection
+  socket.emit("joinRoom", { username, room });
+});
 
 // Get room and users
 socket.on("roomUsers", ({ room, users }) => {
+  console.log("Room users received:", { room, users }); // Logging
   outputRoomName(room);
   outputUsers(users);
 });
 
 // Message from server
 socket.on("message", (message) => {
-  console.log(message);
+  console.log("Message received:", message);
   outputMessage(message);
 
   // Scroll down
@@ -83,11 +88,15 @@ function outputUsers(users) {
   });
 }
 
-//Prompt the user before leave chat room
+// Prompt the user before leave chat room
 document.getElementById("leave-btn").addEventListener("click", () => {
   const leaveRoom = confirm("Are you sure you want to leave the chatroom?");
   if (leaveRoom) {
     window.location = "../index.html";
-  } else {
   }
+});
+
+// Add error handling
+socket.on("connect_error", (error) => {
+  console.error("Connection Error:", error);
 });

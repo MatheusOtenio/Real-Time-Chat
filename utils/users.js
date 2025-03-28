@@ -2,8 +2,25 @@ const users = [];
 
 // Join user to chat
 function userJoin(id, username, room) {
-  const user = { id, username, room };
+  // Validate inputs
+  if (!id || !username || !room) {
+    console.error("Invalid user join parameters");
+    return null;
+  }
 
+  // Check if username already exists in room
+  const existingUser = users.find(
+    (user) =>
+      user.username.toLowerCase() === username.toLowerCase() &&
+      user.room === room
+  );
+
+  if (existingUser) {
+    // Append a number to make username unique
+    username = `${username}_${users.filter((u) => u.room === room).length + 1}`;
+  }
+
+  const user = { id, username, room };
   users.push(user);
 
   return user;
