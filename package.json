@@ -1,5 +1,5 @@
 {
-  "name": "chatcord",
+  "name": "chatme",
   "version": "1.0.0",
   "description": "Realtime chat app with rooms",
   "main": "server.js",
@@ -7,8 +7,8 @@
     "start": "node server",
     "dev": "nodemon server"
   },
-  "author": "Brad Traversy",
-  "license": "MIT",
+  "author": "mathuesotenio",
+  "license": "MO",
   "dependencies": {
     "dotenv": "^14.3.2",
     "express": "^4.21.2",

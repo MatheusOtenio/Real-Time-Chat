@@ -18,7 +18,7 @@ const io = socketio(server);
 // Set static folder
 app.use(express.static(path.join(__dirname, "public")));
 
-const botName = "ChatCord Bot";
+const botName = "Chat-MO AI";
 
 // Run when client connects
 io.on("connection", (socket) => {
@@ -28,7 +28,14 @@ io.on("connection", (socket) => {
     socket.join(user.room);
 
     // Welcome current user
-    socket.emit("message", formatMessage(botName, "Welcome to ChatCord!"));
+    socket.emit("message", formatMessage(botName, "Welcome to Chat MO!"));
+    socket.emit(
+      "message",
+      formatMessage(
+        botName,
+        "This is a chat for discussions and learning about programming languages, with each room dedicated to a different language. Let's learn together!"
+      )
+    );
 
     // Broadcast when a user connects
     socket.broadcast

@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css?family=Roboto&display=swap");
 
 :root {
-  --dark-color-a: #667aff;
-  --dark-color-b: #7386ff;
+  --dark-color-a: #32de84;
+  --dark-color-b: #006a4e;
   --light-color: #e6e9ff;
-  --success-color: #5cb85c;
+  --success-color: #007fff;
   --error-color: #d9534f;
 }
 
