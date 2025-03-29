@@ -17,12 +17,18 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS configuration
+// Initialize Socket.IO with CORS and Vercel-friendly configuration
 const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
+  // These settings help with serverless environments
+  transports: ["websocket", "polling"],
+  path: "/socket.io/",
+  // Increase ping timeout for Vercel's serverless functions
+  pingTimeout: 60000,
+  // Adapter can be added here if you want to scale to multiple instances
 });
 
 // Serve static files from public directory
@@ -40,13 +46,23 @@ app.get("/chat.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
+// Improved error handling for routes
+app.use((req, res, next) => {
+  res.status(404).sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("New socket connection established");
+  console.log("New socket connection established:", socket.id);
 
   // Handle user joining a room
   socket.on("joinRoom", ({ username, room }) => {
     console.log(`User ${username} attempting to join room ${room}`);
+
+    if (!username || !room) {
+      console.error("Missing username or room");
+      return;
+    }
 
     // Create user and add to room
     const user = userJoin(socket.id, username, room);
@@ -86,11 +102,14 @@ io.on("connection", (socket) => {
 
     if (user) {
       io.to(user.room).emit("message", formatMessage(user.username, msg));
+    } else {
+      console.error("Message received from unknown user");
     }
   });
 
   // Handle user disconnection
   socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
     const user = userLeave(socket.id);
 
     if (user) {
@@ -106,15 +125,22 @@ io.on("connection", (socket) => {
       });
     }
   });
+
+  // Additional error handling
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
 });
 
 // Port configuration
 const PORT = process.env.PORT || 3000;
 
-// Start the server
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start the server - only if not in a serverless environment
+if (process.env.NODE_ENV !== "production") {
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 // Export for Vercel
-module.exports = app;
+module.exports = server;
