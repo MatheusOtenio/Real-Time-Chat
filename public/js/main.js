@@ -8,21 +8,25 @@ const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
 });
 
-console.log(`Attempting to join with username: ${username}, room: ${room}`); // Logging
+console.log(`Attempting to join with username: ${username}, room: ${room}`);
 
-const socket = io(window.location.origin, {
+// Improved socket initialization with error handling
+const socket = io({
   transports: ["websocket", "polling"],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  timeout: 10000,
 });
 
-// Join chatroom
+// Join chatroom when connected
 socket.on("connect", () => {
-  console.log("Socket connected"); // Confirm connection
+  console.log("Socket connected with ID:", socket.id);
   socket.emit("joinRoom", { username, room });
 });
 
 // Get room and users
 socket.on("roomUsers", ({ room, users }) => {
-  console.log("Room users received:", { room, users }); // Logging
+  console.log("Room users received:", { room, users });
   outputRoomName(room);
   outputUsers(users);
 });
@@ -92,11 +96,22 @@ function outputUsers(users) {
 document.getElementById("leave-btn").addEventListener("click", () => {
   const leaveRoom = confirm("Are you sure you want to leave the chatroom?");
   if (leaveRoom) {
-    window.location = "../index.html";
+    // Fix: Use absolute path instead of relative path
+    window.location = "/index.html";
   }
 });
 
-// Add error handling
+// Enhanced error handling
 socket.on("connect_error", (error) => {
   console.error("Connection Error:", error);
+  alert("Failed to connect to the chat server. Please try again later.");
+});
+
+socket.on("reconnect_attempt", (attemptNumber) => {
+  console.log(`Attempting to reconnect (${attemptNumber})...`);
+});
+
+socket.on("reconnect_failed", () => {
+  console.error("Failed to reconnect after multiple attempts");
+  alert("Connection lost. Please refresh the page to try again.");
 });
