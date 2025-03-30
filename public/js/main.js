@@ -10,18 +10,25 @@ const { username, room } = Qs.parse(location.search, {
 
 console.log(`Attempting to join with username: ${username}, room: ${room}`);
 
-// Improved socket initialization with error handling
+// Socket initialization that works better with Render
 const socket = io({
   transports: ["websocket", "polling"],
-  reconnectionAttempts: 5,
+  reconnectionAttempts: 10,
   reconnectionDelay: 1000,
-  timeout: 10000,
+  timeout: 20000,
+  autoConnect: true,
 });
 
-// Join chatroom when connected
+// Connection status indicators
 socket.on("connect", () => {
-  console.log("Socket connected with ID:", socket.id);
+  console.log("Connected to server with ID:", socket.id);
+
+  // Only attempt to join room when successfully connected
   socket.emit("joinRoom", { username, room });
+
+  // Hide any previous connection error message
+  const errorMsg = document.getElementById("connection-error");
+  if (errorMsg) errorMsg.style.display = "none";
 });
 
 // Get room and users
@@ -96,22 +103,49 @@ function outputUsers(users) {
 document.getElementById("leave-btn").addEventListener("click", () => {
   const leaveRoom = confirm("Are you sure you want to leave the chatroom?");
   if (leaveRoom) {
-    // Fix: Use absolute path instead of relative path
-    window.location = "/index.html";
+    // Disconnect socket before navigating
+    socket.disconnect();
+    window.location = "/";
   }
 });
 
 // Enhanced error handling
 socket.on("connect_error", (error) => {
   console.error("Connection Error:", error);
-  alert("Failed to connect to the chat server. Please try again later.");
+
+  // Create an error message if it doesn't exist
+  if (!document.getElementById("connection-error")) {
+    const errorDiv = document.createElement("div");
+    errorDiv.id = "connection-error";
+    errorDiv.style.backgroundColor = "#f8d7da";
+    errorDiv.style.color = "#721c24";
+    errorDiv.style.padding = "10px";
+    errorDiv.style.marginBottom = "15px";
+    errorDiv.style.borderRadius = "5px";
+    errorDiv.style.textAlign = "center";
+    errorDiv.innerText =
+      "Failed to connect to the chat server. Attempting to reconnect...";
+
+    // Insert at the top of the chat messages area
+    chatMessages.insertBefore(errorDiv, chatMessages.firstChild);
+  }
 });
 
-socket.on("reconnect_attempt", (attemptNumber) => {
-  console.log(`Attempting to reconnect (${attemptNumber})...`);
+socket.on("reconnect", (attemptNumber) => {
+  console.log(`Reconnected after ${attemptNumber} attempts`);
+
+  // Hide the error message if it exists
+  const errorMsg = document.getElementById("connection-error");
+  if (errorMsg) errorMsg.style.display = "none";
 });
 
 socket.on("reconnect_failed", () => {
   console.error("Failed to reconnect after multiple attempts");
-  alert("Connection lost. Please refresh the page to try again.");
+
+  // Update the error message
+  const errorMsg = document.getElementById("connection-error");
+  if (errorMsg) {
+    errorMsg.innerText =
+      "Connection lost. Please refresh the page to try again.";
+  }
 });

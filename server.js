@@ -17,25 +17,23 @@ const app = express();
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS and Vercel-friendly configuration
+// Initialize Socket.IO with CORS and Render-friendly configuration
 const io = new Server(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
   },
-  // These settings help with serverless environments
   transports: ["websocket", "polling"],
   path: "/socket.io/",
-  // Increase ping timeout for Vercel's serverless functions
+  // Increase ping timeout for cloud environments
   pingTimeout: 60000,
-  // Adapter can be added here if you want to scale to multiple instances
 });
 
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, "public")));
 
 // Bot name for system messages
-const botName = "ChatCord Bot";
+const botName = "ChatMO Bot";
 
 // Routes to ensure pages are served correctly
 app.get("/", (req, res) => {
@@ -47,7 +45,7 @@ app.get("/chat.html", (req, res) => {
 });
 
 // Improved error handling for routes
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "public", "index.html"));
 });
 
@@ -135,12 +133,10 @@ io.on("connection", (socket) => {
 // Port configuration
 const PORT = process.env.PORT || 3000;
 
-// Start the server - only if not in a serverless environment
-if (process.env.NODE_ENV !== "production") {
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-// Export for Vercel
-module.exports = server;
+// For Render, we need to export the app
+module.exports = app;
